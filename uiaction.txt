@@ -1,0 +1,163 @@
+import { Page, Locator, expect } from "@playwright/test";
+
+export class UIAction {
+  constructor(private page: Page) {}
+
+  // *************** SAFE LOCATOR WRAPPER ***************
+  private async safe(locatorFunc: () => Locator, action: string): Promise<Locator> {
+    try {
+      const locator = locatorFunc();
+      await locator.waitFor({ state: "visible", timeout: 5000 });
+      return locator;
+    } catch (err) {
+      throw new Error(
+        `❌ Action Failed: ${action}
+🕵️ Locator: ${locatorFunc.toString()}
+📌 Reason: Element not visible or not found on UI.`
+      );
+    }
+  }
+
+  // *************** LOCATORS *****************
+  getByRole(role: string, name?: string): Locator {
+    return name ? this.page.getByRole(role, { name }) : this.page.getByRole(role);
+  }
+
+  getByTextExact(text: string): Locator {
+    return this.page.getByText(text, { exact: true });
+  }
+
+  getByTextContains(text: string): Locator {
+    return this.page.getByText(text);
+  }
+
+  getByPlaceholder(text: string): Locator {
+    return this.page.getByPlaceholder(text);
+  }
+
+  getByLabel(text: string): Locator {
+    return this.page.getByLabel(text);
+  }
+
+  getByTestId(id: string): Locator {
+    return this.page.getByTestId(id);
+  }
+
+  getByCSS(selector: string): Locator {
+    return this.page.locator(selector);
+  }
+
+  getByXpath(xpath: string): Locator {
+    return this.page.locator(xpath);
+  }
+
+  getNth(locator: Locator, index: number): Locator {
+    return locator.nth(index);
+  }
+
+  // *************** USER ACTIONS ***************
+  async click(locator: Locator) {
+    const element = await this.safe(() => locator, "Click");
+    await element.click();
+  }
+
+  async doubleClick(locator: Locator) {
+    const element = await this.safe(() => locator, "Double Click");
+    await element.dblclick();
+  }
+
+  async rightClick(locator: Locator) {
+    const element = await this.safe(() => locator, "Right Click");
+    await element.click({ button: "right" });
+  }
+
+  async hover(locator: Locator) {
+    const element = await this.safe(() => locator, "Hover");
+    await element.hover();
+  }
+
+  async scrollIntoView(locator: Locator) {
+    const element = await this.safe(() => locator, "Scroll");
+    await element.scrollIntoViewIfNeeded();
+  }
+
+  async fill(locator: Locator, value: string) {
+    const element = await this.safe(() => locator, `Fill: ${value}`);
+    await element.fill(value);
+  }
+
+  async clear(locator: Locator) {
+    const element = await this.safe(() => locator, "Clear");
+    await element.fill("");
+  }
+
+  async type(locator: Locator, value: string, delay = 50) {
+    const element = await this.safe(() => locator, `Type: ${value}`);
+    await element.fill("");
+    await element.type(value, { delay });
+  }
+
+  async press(locator: Locator, key: string) {
+    const element = await this.safe(() => locator, `Press Key: ${key}`);
+    await element.press(key);
+  }
+
+  async selectDropdown(locator: Locator, value: string) {
+    const element = await this.safe(() => locator, `Select Dropdown: ${value}`);
+    await element.selectOption({ label: value });
+  }
+
+  async uploadFile(locator: Locator, filePath: string) {
+    const element = await this.safe(() => locator, `Upload File: ${filePath}`);
+    await element.setInputFiles(filePath);
+  }
+
+  async dragAndDrop(source: Locator, target: Locator) {
+    const src = await this.safe(() => source, "Drag Source");
+    const dest = await this.safe(() => target, "Drop Target");
+    await src.dragTo(dest);
+  }
+
+  async getText(locator: Locator): Promise<string> {
+    const element = await this.safe(() => locator, "Get Text");
+    return (await element.textContent())?.trim() ?? "";
+  }
+
+  async getAttribute(locator: Locator, attr: string) {
+    const element = await this.safe(() => locator, `Get Attribute: ${attr}`);
+    return await element.getAttribute(attr);
+  }
+
+  async isVisible(locator: Locator): Promise<boolean> {
+    try {
+      return await locator.isVisible();
+    } catch {
+      return false;
+    }
+  }
+
+  async count(locator: Locator): Promise<number> {
+    return await locator.count();
+  }
+
+  async takeScreenshot(locator: Locator, path: string) {
+    const element = await this.safe(() => locator, `Screenshot: ${path}`);
+    await element.screenshot({ path });
+  }
+
+  // *************** ASSERTIONS ***************
+  async assertVisible(locator: Locator) {
+    const element = await this.safe(() => locator, "Assert Visible");
+    await expect(element).toBeVisible();
+  }
+
+  async assertContainsText(locator: Locator, text: string) {
+    const element = await this.safe(() => locator, `Assert Contains: ${text}`);
+    await expect(element).toContainText(text);
+  }
+
+  async assertExactText(locator: Locator, text: string) {
+    const element = await this.safe(() => locator, `Assert Exact Text: ${text}`);
+    await expect(element).toHaveText(text);
+  }
+}
