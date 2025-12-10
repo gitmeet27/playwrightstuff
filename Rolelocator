@@ -1,0 +1,13 @@
+async getElement(
+  role: any,
+  frameName?: string,
+  name?: string
+): Promise<Locator> {
+  const base = frameName
+    ? this.page.frameLocator(`iframe[name="${frameName}"]`)
+    : this.page;
+
+  return name
+    ? base.getByRole(role, { name })
+    : base.getByRole(role);
+}
