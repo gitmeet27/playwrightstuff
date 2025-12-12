@@ -1,0 +1,82 @@
+// src/pages/pageManager.ts
+import type { Page } from '@playwright/test';
+import { LoginPage } from './loginPage';
+import { HomePage } from './homePage';
+
+export class PageManager {
+  private _loginPage?: LoginPage;
+  private _homePage?: HomePage;
+
+  constructor(private page: Page) {}
+
+  get loginPage() {
+    if (!this._loginPage) {
+      this._loginPage = new LoginPage(this.page);
+    }
+    return this._loginPage;
+  }
+
+  get homePage() {
+    if (!this._homePage) {
+      this._homePage = new HomePage(this.page);
+    }
+    return this._homePage;
+  }
+}
+
+
+
+==========================
+
+
+// src/fixtures/testBase.ts
+import { test as base, chromium, expect as baseExpect } from '@playwright/test';
+import { PageManager } from '../pages/pageManager';
+
+export const test = base.extend<{
+  pageManager: PageManager;
+}>({
+  pageManager: async ({}, use) => {
+
+    const browser = await chromium.launch({ headless: true });
+    const context = await browser.newContext();
+    const page = await context.newPage();
+
+    // Only create PageManager — NOT page classes
+    const pm = new PageManager(page);
+
+    await use(pm);  // test receives pageManager
+
+    await browser.close();
+  },
+});
+
+export const expect = baseExpect;
+
+
+==============================
+
+
+// src/fixtures/testBase.ts
+import { test as base, chromium, expect as baseExpect } from '@playwright/test';
+import { PageManager } from '../pages/pageManager';
+
+export const test = base.extend<{
+  pageManager: PageManager;
+}>({
+  pageManager: async ({}, use) => {
+
+    const browser = await chromium.launch({ headless: true });
+    const context = await browser.newContext();
+    const page = await context.newPage();
+
+    // Only create PageManager — NOT page classes
+    const pm = new PageManager(page);
+
+    await use(pm);  // test receives pageManager
+
+    await browser.close();
+  },
+});
+
+export const expect = baseExpect;
